@@ -32,19 +32,51 @@ impl Node {
         }
     }
 
-    pub fn id(&self) -> String {
-        self.id.clone()
+    pub fn id(&self) -> &str {
+        &self.id
     }
-    
-    pub fn name(&self) -> String {
-        self.name.clone()
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     pub fn votes(&self) -> u32 {
         self.votes
     }
 
-    pub fn color(&self) -> String {
-        self.color.clone()
+    pub fn color(&self) -> &str {
+        &self.color
+    }
+
+    pub fn x_pos(&self) -> f64 {
+        self.x_pos
+    }
+
+    pub fn y_pos(&self) -> f64 {
+        self.y_pos
+    }
+
+    pub fn height(&self) -> f64 {
+        self.height
+    }
+
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+
+    pub fn set_x_pos(&mut self, x_pos: f64) {
+        self.x_pos = x_pos;
+    }
+
+    pub fn set_y_pos(&mut self, y_pos: f64) {
+        self.y_pos = y_pos;
+    }
+
+    pub fn set_height(&mut self, height: f64) {
+        self.height = height;
+    }
+
+    pub fn set_label(&mut self, label: String) {
+        self.label = label;
     }
 }

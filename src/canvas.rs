@@ -5,18 +5,11 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use crate::node::Node;
 use crate::flow::Flow;
-
-struct Rectangle {
-    node: Rc<RefCell<Node>>,
-    x_pos: f64,
-    y_pos: f64,
-    height: f64,
-    label: String
-}
+use web_sys::console::log_1;
 
 struct Stream {
-    origin: Rc<RefCell<Rectangle>>,
-    destination: Rc<RefCell<Rectangle>>,
+    origin: Rc<RefCell<Node>>,
+    destination: Rc<RefCell<Node>>,
     size: i32,
     color: String
 }
@@ -33,7 +26,7 @@ pub struct Canvas {
     height: u32,
     context: CanvasRenderingContext2d,
     winner_votes: u32,
-    rectangles: HashMap<String, Rc<RefCell<Rectangle>>>,
+    nodes: HashMap<String, Rc<RefCell<Node>>>,
     streams: Vec<Stream>
 }
 
@@ -67,7 +60,7 @@ impl Canvas {
             width,
             height,
             context,
-            rectangles: HashMap::new(),
+            nodes: HashMap::new(),
             winner_votes: 0,
             streams: vec![]
         }
@@ -80,34 +73,29 @@ impl Canvas {
         let round_amount = config.len();
 
         let space_between_y = self.calc_space_between_y(&config[0]);
-
+        
         for (round_index, nodes) in config.iter().enumerate() {
             let offset_x = self.calc_offset_x(round_amount, round_index);
 
             let mut offset_y = self.calc_round_height(nodes, space_between_y);
 
             for node in nodes.iter() {
-                let borrowed_node = node.borrow();
+                let mut borrowed_node = node.borrow_mut();
                 
                 let rec_height = self.calc_single_rec_height(borrowed_node.votes());
 
                 // Never show labels in second round
                 let label = match round_index {
                     1 => "".to_string(),
-                    _ => borrowed_node.name()
+                    _ => borrowed_node.name().to_string()
                 };
+                
+                borrowed_node.set_x_pos(offset_x as f64);
+                borrowed_node.set_y_pos(offset_y as f64);
+                borrowed_node.set_height(rec_height as f64);
+                borrowed_node.set_label(label);
 
-                self.rectangles.insert(
-                    format!("{}-{}", borrowed_node.name(), round_amount - round_index - 1),
-                    Rc::new(RefCell::new(Rectangle {
-                        x_pos: offset_x as f64,
-                        y_pos: offset_y as f64,
-                        height: rec_height as f64,
-                        label,
-                        node: Rc::clone(node)
-                    }
-                    ))
-                );
+                self.nodes.insert(borrowed_node.id().to_string(), Rc::clone(node));
 
                 offset_y += rec_height + space_between_y;
             }
@@ -116,8 +104,8 @@ impl Canvas {
 
     pub fn process_flows(&mut self, flows: &Vec<Flow>) {
         for flow in flows.iter() {
-            let Some(origin) = self.rectangles.get(&flow.origin().borrow().id()) else { continue; };
-            let Some(destination) = self.rectangles.get(&flow.destination().borrow().id()) else { continue; };
+            let Some(origin) = self.nodes.get(&flow.origin().borrow().id().to_string()) else { continue; };
+            let Some(destination) = self.nodes.get(&flow.destination().borrow().id().to_string()) else { continue; };
 
             self.streams.push(Stream {
                 origin: Rc::clone(origin),
@@ -132,11 +120,11 @@ impl Canvas {
             let destination = flow.destination.borrow();
 
             // Show labels only when it's the last node of a game
-            if origin.label == destination.label {
-                origin.label = "".to_string();
+            if origin.label() == destination.label() {
+                origin.set_label("".to_string());
             }
             // Have a darker color for flows from a losing game
-            if origin.node.borrow().name() == destination.node.borrow().name() {
+            if origin.name() == destination.name() {
                 flow.color = Self::FLOW_COLOR_WIN.to_string();
             }
         }
@@ -145,17 +133,17 @@ impl Canvas {
     pub fn draw(&self) {
         let rec_width = Self::REC_WIDTH as f64;
 
-        for (_, rectangle) in self.rectangles.iter() {
-            let rectangle = rectangle.borrow();
+        for (_, node) in self.nodes.iter() {
+            let node_borrowed = node.borrow();
 
             self.draw_rec(
-                rectangle.x_pos,
-                rectangle.y_pos,
+                node_borrowed.x_pos(),
+                node_borrowed.y_pos(),
                 rec_width,
-                rectangle.height,
-                &rectangle.node.borrow().color(),
-                rectangle.node.borrow().votes(),
-                &rectangle.label
+                node_borrowed.height(),
+                &node_borrowed.color(),
+                node_borrowed.votes(),
+                &node_borrowed.label()
             );
         }
 
@@ -170,19 +158,19 @@ impl Canvas {
             let origin = stream.origin.borrow();
             let destination = stream.destination.borrow();
 
-            let origin_percentage: f64 = stream.size as f64 / origin.node.borrow().votes() as f64;
-            let origin_height = origin.height * origin_percentage;
-            let destination_percentage: f64 = stream.size as f64 / destination.node.borrow().votes() as f64;
-            let destination_height = destination.height * destination_percentage;
+            let origin_percentage: f64 = stream.size as f64 / origin.votes() as f64;
+            let origin_height = origin.height() * origin_percentage;
+            let destination_percentage: f64 = stream.size as f64 / destination.votes() as f64;
+            let destination_height = destination.height() * destination_percentage;
 
-            let origin_y_offset = origin_y_offsets.entry(origin.node.borrow().id()).or_insert(0.0);
-            let destination_y_offset = destination_y_offsets.entry(destination.node.borrow().id()).or_insert(0.0);
+            let origin_y_offset = origin_y_offsets.entry(origin.id().to_string()).or_insert(0.0);
+            let destination_y_offset = destination_y_offsets.entry(destination.id().to_string()).or_insert(0.0);
 
             self.draw_flow(
-                origin.x_pos + rec_width,
-                origin.y_pos + *origin_y_offset,
-                destination.x_pos,
-                destination.y_pos + *destination_y_offset,
+                origin.x_pos() + rec_width,
+                origin.y_pos() + *origin_y_offset,
+                destination.x_pos(),
+                destination.y_pos() + *destination_y_offset,
                 origin_height,
                 destination_height
             );
@@ -226,7 +214,7 @@ impl Canvas {
         let vertical_center = pos_y + height / 2.0;
         let text_height = 12.0;
 
-        // Label first round to the right, other rounds to the left of rectangle
+        // Label first round to the right, other rounds to the left of node
         let text_width = self.context.measure_text(label).unwrap().width();
         let label_pos_x = if pos_x - text_width <= 0.0  {
             pos_x + Self::REC_WIDTH as f64 + 10.0
