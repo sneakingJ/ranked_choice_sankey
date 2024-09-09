@@ -89,17 +89,24 @@ impl Canvas {
         }
     }
 
-    pub fn process_flows(&mut self, flows: &Vec<Flow>) {
-        for flow in flows.iter() {
-            let Some(origin) = self.nodes.get(&flow.origin().borrow().id().to_string()) else { continue; };
-            let Some(destination) = self.nodes.get(&flow.destination().borrow().id().to_string()) else { continue; };
+    pub fn process_flows(&mut self, flows: &[Flow]) {
+        self.flows = flows
+            .iter()
+            .filter_map(|flow| {
+                let origin = self
+                    .nodes
+                    .get(&flow.origin().borrow().id().to_string())?;
+                let destination = self
+                    .nodes
+                    .get(&flow.destination().borrow().id().to_string())?;
 
-            let mut new_flow = flow.clone();
-            new_flow.set_origin(Rc::clone(origin));
-            new_flow.set_destination(Rc::clone(destination));
-            
-            self.flows.push(new_flow);
-        }
+                let mut new_flow = flow.clone();
+                new_flow.set_origin(Rc::clone(origin));
+                new_flow.set_destination(Rc::clone(destination));
+
+                Some(new_flow)
+            })
+            .collect();
     }
 
     pub fn draw(&self) {
