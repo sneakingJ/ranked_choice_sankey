@@ -1,0 +1,23 @@
+[package]
+name = "ranked_choice_sankey"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+anyhow = "1.0.86"
+wasm-bindgen = "0.2.93"
+serde = "1.0.209"
+serde-wasm-bindgen = "0.6.5"
+
+[dependencies.web-sys]
+version = "0.3.70"
+features = [
+    "CanvasRenderingContext2d",
+    "Document",
+    "HtmlCanvasElement",
+    "Window",
+    "TextMetrics"
+]
