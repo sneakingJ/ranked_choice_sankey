@@ -28,7 +28,7 @@ impl Node {
             x_pos: 0.0,
             y_pos: 0.0,
             height: 0.0,
-            label: label.to_string()
+            label: name.to_string()
         }
     }
 

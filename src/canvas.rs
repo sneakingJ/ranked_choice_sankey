@@ -83,17 +83,18 @@ impl Canvas {
                 let mut borrowed_node = node.borrow_mut();
                 
                 let rec_height = self.calc_single_rec_height(borrowed_node.votes());
+                let name = borrowed_node.name().to_string();
 
-                // Never show labels in second round
-                let label = match round_index {
-                    1 => "".to_string(),
-                    _ => borrowed_node.name().to_string()
+                // Never show labels in second round but always in first
+                match round_index {
+                    0 => borrowed_node.set_label(name),
+                    1 => borrowed_node.set_label("".to_string()),
+                    _ => ()
                 };
                 
                 borrowed_node.set_x_pos(offset_x as f64);
                 borrowed_node.set_y_pos(offset_y as f64);
                 borrowed_node.set_height(rec_height as f64);
-                borrowed_node.set_label(label);
 
                 self.nodes.insert(borrowed_node.id().to_string(), Rc::clone(node));
 
@@ -111,22 +112,8 @@ impl Canvas {
                 origin: Rc::clone(origin),
                 destination: Rc::clone(destination),
                 size: flow.size(),
-                color: Self::FLOW_COLOR_LOSE.to_string()
+                color: flow.color().to_string()
             });
-        }
-
-        for flow in self.streams.iter_mut().rev() {
-            let mut origin = flow.origin.borrow_mut();
-            let destination = flow.destination.borrow();
-
-            // Show labels only when it's the last node of a game
-            if origin.label() == destination.label() {
-                origin.set_label("".to_string());
-            }
-            // Have a darker color for flows from a losing game
-            if origin.name() == destination.name() {
-                flow.color = Self::FLOW_COLOR_WIN.to_string();
-            }
         }
     }
 

@@ -59,7 +59,16 @@ impl Config {
             }
 
             let Some(destination) = last_round.get(destination_label) else { continue; };
-            flows.push(Flow::new(Rc::clone(&origin), Rc::clone(&destination), size));
+
+            let mut new_flow = Flow::new(Rc::clone(&origin), Rc::clone(&destination), size);
+
+            // Have a darker color for flows from a losing game and only show labels for losers
+            if origin.borrow().name() == destination.borrow().name() {
+                origin.borrow_mut().set_label("".to_string());
+                new_flow.set_winning_color();
+            }
+
+            flows.push(new_flow);
         }
 
         nodes_per_round.push(self.sort_current_round(&current_round));

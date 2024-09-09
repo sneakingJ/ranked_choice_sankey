@@ -2,18 +2,27 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use crate::node::Node;
 
+trait FlowConstants {
+    const FLOW_COLOR_WIN: &'static str = "#777879";
+    const FLOW_COLOR_LOSE: &'static str = "#484848";
+}
+
 pub struct Flow {
     origin: Rc<RefCell<Node>>,
     destination: Rc<RefCell<Node>>,
-    size: i32
+    size: i32,
+    color: String
 }
+
+impl FlowConstants for Flow {}
 
 impl Flow {
     pub fn new(origin: Rc<RefCell<Node>>, destination: Rc<RefCell<Node>>, size: i32) -> Self {
         Self {
             origin,
             destination,
-            size
+            size,
+            color: Self::FLOW_COLOR_LOSE.to_string()
         }
     }
     
@@ -27,5 +36,13 @@ impl Flow {
 
     pub fn size(&self) -> i32 {
         self.size
+    }
+
+    pub fn color(&self) -> &str {
+        &self.color
+    }
+
+    pub fn set_winning_color(&mut self) {
+        self.color = Self::FLOW_COLOR_WIN.to_string();
     }
 }
