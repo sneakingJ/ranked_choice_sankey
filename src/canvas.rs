@@ -6,11 +6,6 @@ use std::cell::RefCell;
 use crate::node::Node;
 use crate::flow::Flow;
 
-trait CanvasConstants {
-    const REC_WIDTH: usize = 20;
-    const WINNER_REC_HEIGHT_PERCENT: f64 = 3.0;
-}
-
 pub struct Canvas {
     width: u32,
     height: u32,
@@ -20,9 +15,10 @@ pub struct Canvas {
     flows: Vec<Flow>
 }
 
-impl CanvasConstants for Canvas {}
-
 impl Canvas {
+    const REC_WIDTH: usize = 20;
+    const WINNER_REC_HEIGHT_PERCENT: f64 = 3.0;
+    
     pub fn new(id: &str) -> Self {
         let document = web_sys::window().unwrap().document().unwrap();
         let canvas = document.get_element_by_id(id).unwrap();
