@@ -9,8 +9,6 @@ use crate::flow::Flow;
 trait CanvasConstants {
     const REC_WIDTH: usize = 20;
     const WINNER_REC_HEIGHT_PERCENT: f64 = 3.0;
-    const FLOW_COLOR_WIN: &'static str = "#777879";
-    const FLOW_COLOR_LOSE: &'static str = "#484848";
 }
 
 pub struct Canvas {
