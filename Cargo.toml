@@ -22,6 +22,5 @@ features = [
     "Document",
     "HtmlCanvasElement",
     "Window",
-    "TextMetrics",
-    "console"
+    "TextMetrics"
 ]
