@@ -7,7 +7,7 @@ use crate::node::Node;
 use crate::flow::Flow;
 
 struct Rectangle {
-    node: Rc<Node>,
+    node: Rc<RefCell<Node>>,
     x_pos: f64,
     y_pos: f64,
     height: f64,
@@ -73,9 +73,9 @@ impl Canvas {
         }
     }
 
-    pub fn process_nodes(&mut self, config: &Vec<Vec<Rc<Node>>>) {
+    pub fn process_nodes(&mut self, config: &Vec<Vec<Rc<RefCell<Node>>>>) {
         let last_round = &config[config.len() - 1];
-        self.winner_votes = last_round[0].votes();
+        self.winner_votes = last_round[0].borrow().votes();
 
         let round_amount = config.len();
 
@@ -87,16 +87,18 @@ impl Canvas {
             let mut offset_y = self.calc_round_height(nodes, space_between_y);
 
             for node in nodes.iter() {
-                let rec_height = self.calc_single_rec_height(node.votes());
+                let borrowed_node = node.borrow();
+                
+                let rec_height = self.calc_single_rec_height(borrowed_node.votes());
 
                 // Never show labels in second round
                 let label = match round_index {
                     1 => "".to_string(),
-                    _ => node.name()
+                    _ => borrowed_node.name()
                 };
 
                 self.rectangles.insert(
-                    format!("{}-{}", node.name(), round_amount - round_index - 1),
+                    format!("{}-{}", borrowed_node.name(), round_amount - round_index - 1),
                     Rc::new(RefCell::new(Rectangle {
                         x_pos: offset_x as f64,
                         y_pos: offset_y as f64,
@@ -114,8 +116,8 @@ impl Canvas {
 
     pub fn process_flows(&mut self, flows: &Vec<Flow>) {
         for flow in flows.iter() {
-            let Some(origin) = self.rectangles.get(&flow.origin().id()) else { continue; };
-            let Some(destination) = self.rectangles.get(&flow.destination().id()) else { continue; };
+            let Some(origin) = self.rectangles.get(&flow.origin().borrow().id()) else { continue; };
+            let Some(destination) = self.rectangles.get(&flow.destination().borrow().id()) else { continue; };
 
             self.streams.push(Stream {
                 origin: Rc::clone(origin),
@@ -134,7 +136,7 @@ impl Canvas {
                 origin.label = "".to_string();
             }
             // Have a darker color for flows from a losing game
-            if origin.node.name() == destination.node.name() {
+            if origin.node.borrow().name() == destination.node.borrow().name() {
                 flow.color = Self::FLOW_COLOR_WIN.to_string();
             }
         }
@@ -151,8 +153,8 @@ impl Canvas {
                 rectangle.y_pos,
                 rec_width,
                 rectangle.height,
-                &rectangle.node.color(),
-                rectangle.node.votes(),
+                &rectangle.node.borrow().color(),
+                rectangle.node.borrow().votes(),
                 &rectangle.label
             );
         }
@@ -168,13 +170,13 @@ impl Canvas {
             let origin = stream.origin.borrow();
             let destination = stream.destination.borrow();
 
-            let origin_percentage: f64 = stream.size as f64 / origin.node.votes() as f64;
+            let origin_percentage: f64 = stream.size as f64 / origin.node.borrow().votes() as f64;
             let origin_height = origin.height * origin_percentage;
-            let destination_percentage: f64 = stream.size as f64 / destination.node.votes() as f64;
+            let destination_percentage: f64 = stream.size as f64 / destination.node.borrow().votes() as f64;
             let destination_height = destination.height * destination_percentage;
 
-            let origin_y_offset = origin_y_offsets.entry(origin.node.id()).or_insert(0.0);
-            let destination_y_offset = destination_y_offsets.entry(destination.node.id()).or_insert(0.0);
+            let origin_y_offset = origin_y_offsets.entry(origin.node.borrow().id()).or_insert(0.0);
+            let destination_y_offset = destination_y_offsets.entry(destination.node.borrow().id()).or_insert(0.0);
 
             self.draw_flow(
                 origin.x_pos + rec_width,
@@ -289,7 +291,7 @@ impl Canvas {
         (self.width as usize * round_index) / (round_amount - 1) - Self::REC_WIDTH
     }
 
-    fn calc_space_between_y(&self, entries: &[Rc<Node>]) -> u32 {
+    fn calc_space_between_y(&self, entries: &[Rc<RefCell<Node>>]) -> u32 {
         if entries.len() == 1 {
             return 0;
         }
@@ -299,11 +301,11 @@ impl Canvas {
         space_left / (entries.len() as u32 - 1)
     }
 
-    fn calc_all_recs_height(&self, entries: &[Rc<Node>]) -> u32 {
-        entries.iter().fold(0, |acc, x| acc + self.calc_single_rec_height(x.votes()))
+    fn calc_all_recs_height(&self, entries: &[Rc<RefCell<Node>>]) -> u32 {
+        entries.iter().fold(0, |acc, x| acc + self.calc_single_rec_height(x.borrow().votes()))
     }
 
-    fn calc_round_height(&self, entries: &[Rc<Node>], calc_space_between_y: u32) -> u32 {
+    fn calc_round_height(&self, entries: &[Rc<RefCell<Node>>], calc_space_between_y: u32) -> u32 {
         let total_height = self.calc_all_recs_height(entries) + (calc_space_between_y * (entries.len() as u32 - 1));
         let space_left = self.height - total_height;
 

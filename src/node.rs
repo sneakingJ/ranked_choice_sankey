@@ -6,6 +6,10 @@ pub struct Node {
     name: String,
     votes: u32,
     color: String,
+    x_pos: f64,
+    y_pos: f64,
+    height: f64,
+    label: String
 }
 
 impl Node {
@@ -21,6 +25,10 @@ impl Node {
             name: name.to_string(),
             votes,
             color: color.get_color(name.to_string()).to_string(),
+            x_pos: 0.0,
+            y_pos: 0.0,
+            height: 0.0,
+            label: label.to_string()
         }
     }
 

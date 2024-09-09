@@ -1,14 +1,15 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 use crate::node::Node;
 
 pub struct Flow {
-    origin: Rc<Node>,
-    destination: Rc<Node>,
+    origin: Rc<RefCell<Node>>,
+    destination: Rc<RefCell<Node>>,
     size: i32
 }
 
 impl Flow {
-    pub fn new(origin: Rc<Node>, destination: Rc<Node>, size: i32) -> Self {
+    pub fn new(origin: Rc<RefCell<Node>>, destination: Rc<RefCell<Node>>, size: i32) -> Self {
         Self {
             origin,
             destination,
@@ -16,11 +17,11 @@ impl Flow {
         }
     }
     
-    pub fn origin(&self) -> &Rc<Node> {
+    pub fn origin(&self) -> &Rc<RefCell<Node>> {
         &self.origin
     }
 
-    pub fn destination(&self) -> &Rc<Node> {
+    pub fn destination(&self) -> &Rc<RefCell<Node>> {
         &self.destination
     }
 

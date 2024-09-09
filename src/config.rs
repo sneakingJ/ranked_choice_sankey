@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use wasm_bindgen::JsValue;
@@ -12,14 +13,14 @@ impl Config {
         Self {}
     }
 
-    pub fn process(&self, js_config: JsValue, colors: &mut Colors) -> (Vec<Vec<Rc<Node>>>, Vec<Flow>) {
+    pub fn process(&self, js_config: JsValue, colors: &mut Colors) -> (Vec<Vec<Rc<RefCell<Node>>>>, Vec<Flow>) {
         let config: Vec<Vec<String>> = serde_wasm_bindgen::from_value(js_config).unwrap();
 
-        let mut nodes_per_round: Vec<Vec<Rc<Node>>> = vec![];
+        let mut nodes_per_round: Vec<Vec<Rc<RefCell<Node>>>> = vec![];
         let mut flows: Vec<Flow> = vec![];
 
-        let mut current_round: HashMap<&str, Rc<Node>> = HashMap::new();
-        let mut last_round: HashMap<&str, Rc<Node>> = HashMap::new();
+        let mut current_round: HashMap<&str, Rc<RefCell<Node>>> = HashMap::new();
+        let mut last_round: HashMap<&str, Rc<RefCell<Node>>> = HashMap::new();
 
         let mut round_index = 0;
 
@@ -78,12 +79,12 @@ impl Config {
         Some((origin_label.trim(), destination_label.trim(), size))
     }
 
-    fn create_rc_node(&self, label: &str, round_index: usize, colors: &mut Colors) -> Rc<Node> {
-        Rc::new(Node::new(label, colors, round_index))
+    fn create_rc_node(&self, label: &str, round_index: usize, colors: &mut Colors) -> Rc<RefCell<Node>> {
+        Rc::new(RefCell::new(Node::new(label, colors, round_index)))
     }
 
-    fn sort_current_round(&self, nodes: &HashMap<&str, Rc<Node>>) -> Vec<Rc<Node>> {
-        let mut sorted_nodes: Vec<(String, Rc<Node>)> = vec![];
+    fn sort_current_round(&self, nodes: &HashMap<&str, Rc<RefCell<Node>>>) -> Vec<Rc<RefCell<Node>>> {
+        let mut sorted_nodes: Vec<(String, Rc<RefCell<Node>>)> = vec![];
 
         for node in nodes.iter() {
             sorted_nodes.push((node.0.to_string(), Rc::clone(node.1)));

@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::JsValue;
 use crate::flow::Flow;
@@ -8,7 +9,7 @@ use crate::node::Node;
 
 pub struct Voting {
     canvas: Canvas,
-    nodes_per_round: Vec<Vec<Rc<Node>>>,
+    nodes_per_round: Vec<Vec<Rc<RefCell<Node>>>>,
     flows: Vec<Flow>
 }
 
