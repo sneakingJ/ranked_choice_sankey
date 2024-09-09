@@ -99,7 +99,7 @@ impl Config {
             sorted_nodes.push((node.0.to_string(), Rc::clone(node.1)));
         }
 
-        sorted_nodes.sort_by(|a, b| a.0.cmp(&b.0));
+        sorted_nodes.sort_by(|a, b| b.1.borrow().votes().cmp(&a.1.borrow().votes()));
 
         sorted_nodes.into_iter().map(|(_, node)| node).collect()
     }
