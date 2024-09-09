@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+
 use crate::node::Node;
 
 #[derive(Clone)]
@@ -7,22 +8,22 @@ pub struct Flow {
     origin: Rc<RefCell<Node>>,
     destination: Rc<RefCell<Node>>,
     size: i32,
-    color: String
+    color: String,
 }
 
 impl Flow {
     const FLOW_COLOR_WIN: &'static str = "#777879";
     const FLOW_COLOR_LOSE: &'static str = "#484848";
-    
+
     pub fn new(origin: Rc<RefCell<Node>>, destination: Rc<RefCell<Node>>, size: i32) -> Self {
         Self {
             origin,
             destination,
             size,
-            color: Self::FLOW_COLOR_LOSE.to_string()
+            color: Self::FLOW_COLOR_LOSE.to_string(),
         }
     }
-    
+
     pub fn origin(&self) -> &Rc<RefCell<Node>> {
         &self.origin
     }

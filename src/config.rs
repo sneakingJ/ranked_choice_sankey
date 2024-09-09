@@ -1,10 +1,12 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+
 use wasm_bindgen::JsValue;
+
 use crate::colors::Colors;
-use crate::node::Node;
 use crate::flow::Flow;
+use crate::node::Node;
 
 pub struct Config {}
 
@@ -13,7 +15,11 @@ impl Config {
         Self {}
     }
 
-    pub fn process(&self, js_config: JsValue, colors: &mut Colors) -> (Vec<Vec<Rc<RefCell<Node>>>>, Vec<Flow>) {
+    pub fn process(
+        &self,
+        js_config: JsValue,
+        colors: &mut Colors,
+    ) -> (Vec<Vec<Rc<RefCell<Node>>>>, Vec<Flow>) {
         let config: Vec<Vec<String>> = serde_wasm_bindgen::from_value(js_config).unwrap();
 
         let mut nodes_per_round: Vec<Vec<Rc<RefCell<Node>>>> = vec![];
@@ -58,7 +64,9 @@ impl Config {
                 current_round.insert(origin_label, Rc::clone(&origin));
             }
 
-            let Some(destination) = last_round.get(destination_label) else { continue; };
+            let Some(destination) = last_round.get(destination_label) else {
+                continue;
+            };
 
             let mut new_flow = Flow::new(Rc::clone(&origin), Rc::clone(&destination), size);
 
@@ -80,19 +88,35 @@ impl Config {
 
     fn destructure_flow<'b>(&self, flow: &'b [String]) -> Option<(&'b str, &'b str, i32)> {
         let mut flow_iter = flow.iter();
-        let Some(origin_label) = flow_iter.next() else { return None; };
-        let Some(destination_label) = flow_iter.next() else { return None; };
-        let Some(size) = flow_iter.next() else { return None; };
-        let Ok(size) = size.parse::<i32>() else { return None; };
+        let Some(origin_label) = flow_iter.next() else {
+            return None;
+        };
+        let Some(destination_label) = flow_iter.next() else {
+            return None;
+        };
+        let Some(size) = flow_iter.next() else {
+            return None;
+        };
+        let Ok(size) = size.parse::<i32>() else {
+            return None;
+        };
 
         Some((origin_label.trim(), destination_label.trim(), size))
     }
 
-    fn create_rc_node(&self, label: &str, round_index: usize, colors: &mut Colors) -> Rc<RefCell<Node>> {
+    fn create_rc_node(
+        &self,
+        label: &str,
+        round_index: usize,
+        colors: &mut Colors,
+    ) -> Rc<RefCell<Node>> {
         Rc::new(RefCell::new(Node::new(label, colors, round_index)))
     }
 
-    fn sort_current_round(&self, nodes: &HashMap<&str, Rc<RefCell<Node>>>) -> Vec<Rc<RefCell<Node>>> {
+    fn sort_current_round(
+        &self,
+        nodes: &HashMap<&str, Rc<RefCell<Node>>>,
+    ) -> Vec<Rc<RefCell<Node>>> {
         let mut sorted_nodes: Vec<(String, Rc<RefCell<Node>>)> = vec![];
 
         for node in nodes.iter() {

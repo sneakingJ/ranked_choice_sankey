@@ -3,7 +3,7 @@ use std::collections::HashMap;
 pub struct Colors {
     colors: Vec<String>,
     current_index: usize,
-    taken_colors: HashMap<String, usize>
+    taken_colors: HashMap<String, usize>,
 }
 
 impl Default for Colors {
@@ -19,10 +19,10 @@ impl Default for Colors {
                 String::from("#FF1493"),
                 String::from("#00BFFF"),
                 String::from("#00FF00"),
-                String::from("#FFD700")
+                String::from("#FFD700"),
             ],
             current_index: 0,
-            taken_colors: HashMap::new()
+            taken_colors: HashMap::new(),
         }
     }
 }
@@ -30,12 +30,12 @@ impl Default for Colors {
 impl Colors {
     pub fn get_color(&mut self, entry_name: String) -> &str {
         let used_before = self.taken_colors.get(&entry_name);
-        
+
         match used_before {
             Some(index) => &self.colors[*index],
-            None => {                
+            None => {
                 self.taken_colors.insert(entry_name, self.current_index);
-                
+
                 let color = &self.colors[self.current_index];
 
                 self.current_index += 1;

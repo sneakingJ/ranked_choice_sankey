@@ -1,10 +1,12 @@
-use wasm_bindgen::prelude::*;
-use web_sys::{CanvasRenderingContext2d};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::cell::RefCell;
-use crate::node::Node;
+
+use wasm_bindgen::prelude::*;
+use web_sys::CanvasRenderingContext2d;
+
 use crate::flow::Flow;
+use crate::node::Node;
 
 pub struct Canvas {
     width: u32,
@@ -12,13 +14,13 @@ pub struct Canvas {
     context: CanvasRenderingContext2d,
     winner_votes: u32,
     nodes: HashMap<String, Rc<RefCell<Node>>>,
-    flows: Vec<Flow>
+    flows: Vec<Flow>,
 }
 
 impl Canvas {
     const REC_WIDTH: usize = 20;
     const WINNER_REC_HEIGHT_PERCENT: f64 = 3.0;
-    
+
     pub fn new(id: &str) -> Self {
         let document = web_sys::window().unwrap().document().unwrap();
         let canvas = document.get_element_by_id(id).unwrap();
@@ -48,7 +50,7 @@ impl Canvas {
             context,
             nodes: HashMap::new(),
             winner_votes: 0,
-            flows: vec![]
+            flows: vec![],
         }
     }
 
@@ -59,7 +61,7 @@ impl Canvas {
         let round_amount = config.len();
 
         let space_between_y = self.calc_space_between_y(&config[0]);
-        
+
         for (round_index, nodes) in config.iter().enumerate() {
             let offset_x = self.calc_offset_x(round_amount, round_index);
 
@@ -67,7 +69,7 @@ impl Canvas {
 
             for node in nodes.iter() {
                 let mut borrowed_node = node.borrow_mut();
-                
+
                 let rec_height = self.calc_single_rec_height(borrowed_node.votes());
                 let name = borrowed_node.name().to_string();
 
@@ -75,14 +77,15 @@ impl Canvas {
                 match round_index {
                     0 => borrowed_node.set_label(name),
                     1 => borrowed_node.set_label("".to_string()),
-                    _ => ()
+                    _ => (),
                 };
-                
+
                 borrowed_node.set_x_pos(offset_x as f64);
                 borrowed_node.set_y_pos(offset_y as f64);
                 borrowed_node.set_height(rec_height as f64);
 
-                self.nodes.insert(borrowed_node.id().to_string(), Rc::clone(node));
+                self.nodes
+                    .insert(borrowed_node.id().to_string(), Rc::clone(node));
 
                 offset_y += rec_height + space_between_y;
             }
@@ -93,9 +96,7 @@ impl Canvas {
         self.flows = flows
             .iter()
             .filter_map(|flow| {
-                let origin = self
-                    .nodes
-                    .get(&flow.origin().borrow().id().to_string())?;
+                let origin = self.nodes.get(&flow.origin().borrow().id().to_string())?;
                 let destination = self
                     .nodes
                     .get(&flow.destination().borrow().id().to_string())?;
@@ -122,7 +123,7 @@ impl Canvas {
                 node_borrowed.height(),
                 &node_borrowed.color(),
                 node_borrowed.votes(),
-                &node_borrowed.label()
+                &node_borrowed.label(),
             );
         }
 
@@ -132,8 +133,9 @@ impl Canvas {
         let mut destination_y_offsets: HashMap<String, f64> = HashMap::new();
 
         for flow in &self.flows {
-            self.context.set_fill_style(&JsValue::from_str(flow.color().as_ref()));
-            
+            self.context
+                .set_fill_style(&JsValue::from_str(flow.color().as_ref()));
+
             let origin = flow.origin().borrow();
             let destination = flow.destination().borrow();
 
@@ -142,8 +144,12 @@ impl Canvas {
             let destination_percentage: f64 = flow.size() as f64 / destination.votes() as f64;
             let destination_height = destination.height() * destination_percentage;
 
-            let origin_y_offset = origin_y_offsets.entry(origin.id().to_string()).or_insert(0.0);
-            let destination_y_offset = destination_y_offsets.entry(destination.id().to_string()).or_insert(0.0);
+            let origin_y_offset = origin_y_offsets
+                .entry(origin.id().to_string())
+                .or_insert(0.0);
+            let destination_y_offset = destination_y_offsets
+                .entry(destination.id().to_string())
+                .or_insert(0.0);
 
             self.draw_flow(
                 origin.x_pos() + rec_width,
@@ -151,7 +157,7 @@ impl Canvas {
                 destination.x_pos(),
                 destination.y_pos() + *destination_y_offset,
                 origin_height,
-                destination_height
+                destination_height,
             );
 
             *origin_y_offset += origin_height;
@@ -159,7 +165,16 @@ impl Canvas {
         }
     }
 
-    fn draw_rec(&self, pos_x: f64, pos_y: f64, width: f64, height: f64, color: &str, votes: u32, label: &str) {
+    fn draw_rec(
+        &self,
+        pos_x: f64,
+        pos_y: f64,
+        width: f64,
+        height: f64,
+        color: &str,
+        votes: u32,
+        label: &str,
+    ) {
         self.context.set_font("bold 16px sans-serif");
 
         self.context.set_fill_style(&JsValue::from_str(color));
@@ -174,17 +189,17 @@ impl Canvas {
 
     fn draw_votecount(&self, pos_x: f64, pos_y: f64, height: f64, votes: u32) {
         self.context.save();
-        let _ = self.context.translate(pos_x + Self::REC_WIDTH as f64 / 2.0, pos_y + height / 2.0);
+        let _ = self
+            .context
+            .translate(pos_x + Self::REC_WIDTH as f64 / 2.0, pos_y + height / 2.0);
         let _ = self.context.rotate(-90.0 * std::f64::consts::PI / 180.0);
 
         let text = format!("{}", votes);
         let text_width = self.context.measure_text(&text).unwrap().width();
         let text_height = 12.0;
-        self.context.fill_text(
-            &text,
-            -text_width / 2.0,
-            text_height / 2.0
-        ).unwrap();
+        self.context
+            .fill_text(&text, -text_width / 2.0, text_height / 2.0)
+            .unwrap();
 
         self.context.restore();
     }
@@ -195,20 +210,26 @@ impl Canvas {
 
         // Label first round to the right, other rounds to the left of node
         let text_width = self.context.measure_text(label).unwrap().width();
-        let label_pos_x = if pos_x - text_width <= 0.0  {
+        let label_pos_x = if pos_x - text_width <= 0.0 {
             pos_x + Self::REC_WIDTH as f64 + 10.0
         } else {
             pos_x - text_width - 10.0
         };
 
-        self.context.fill_text(
-            label,
-            label_pos_x,
-            vertical_center + text_height / 2.0
-        ).unwrap();
+        self.context
+            .fill_text(label, label_pos_x, vertical_center + text_height / 2.0)
+            .unwrap();
     }
 
-    fn draw_flow(&self, start_x: f64, start_y: f64, end_x: f64, end_y: f64, height_origin: f64, height_destination: f64) {
+    fn draw_flow(
+        &self,
+        start_x: f64,
+        start_y: f64,
+        end_x: f64,
+        end_y: f64,
+        height_origin: f64,
+        height_destination: f64,
+    ) {
         let control_point_1_x = start_x + (end_x - start_x) * 0.5;
         let control_point_1_y = start_y;
 
@@ -219,16 +240,22 @@ impl Canvas {
 
         self.context.move_to(start_x, start_y);
         self.context.bezier_curve_to(
-            control_point_1_x, control_point_1_y,
-            control_point_2_x, control_point_2_y,
-            end_x, end_y,
+            control_point_1_x,
+            control_point_1_y,
+            control_point_2_x,
+            control_point_2_y,
+            end_x,
+            end_y,
         );
 
         self.context.line_to(end_x, end_y + height_destination);
         self.context.bezier_curve_to(
-            control_point_2_x, control_point_2_y + height_destination,
-            control_point_1_x, control_point_1_y + height_origin,
-            start_x, start_y + height_origin,
+            control_point_2_x,
+            control_point_2_y + height_destination,
+            control_point_1_x,
+            control_point_1_y + height_origin,
+            start_x,
+            start_y + height_origin,
         );
 
         self.context.fill();
@@ -269,11 +296,14 @@ impl Canvas {
     }
 
     fn calc_all_recs_height(&self, entries: &[Rc<RefCell<Node>>]) -> u32 {
-        entries.iter().fold(0, |acc, x| acc + self.calc_single_rec_height(x.borrow().votes()))
+        entries.iter().fold(0, |acc, x| {
+            acc + self.calc_single_rec_height(x.borrow().votes())
+        })
     }
 
     fn calc_round_height(&self, entries: &[Rc<RefCell<Node>>], calc_space_between_y: u32) -> u32 {
-        let total_height = self.calc_all_recs_height(entries) + (calc_space_between_y * (entries.len() as u32 - 1));
+        let total_height = self.calc_all_recs_height(entries)
+            + (calc_space_between_y * (entries.len() as u32 - 1));
         let space_left = self.height - total_height;
 
         space_left / 2

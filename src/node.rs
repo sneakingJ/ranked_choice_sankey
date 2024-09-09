@@ -9,17 +9,17 @@ pub struct Node {
     x_pos: f64,
     y_pos: f64,
     height: f64,
-    label: String
+    label: String,
 }
 
 impl Node {
-    pub fn new(label: &str, color: &mut Colors, index: usize) -> Self {        
+    pub fn new(label: &str, color: &mut Colors, index: usize) -> Self {
         let mut label_split = label.split(" (");
-        let name= label_split.next().unwrap_or("?????");
+        let name = label_split.next().unwrap_or("?????");
         let votes = label_split.next().unwrap();
         let votes = &votes[..votes.len() - 1];
         let votes = votes.to_string().parse::<u32>().unwrap_or(0);
-        
+
         Self {
             id: format!("{}-{}", name, index),
             name: name.to_string(),
@@ -28,7 +28,7 @@ impl Node {
             x_pos: 0.0,
             y_pos: 0.0,
             height: 0.0,
-            label: name.to_string()
+            label: name.to_string(),
         }
     }
 
