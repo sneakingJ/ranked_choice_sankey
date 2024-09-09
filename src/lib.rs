@@ -9,10 +9,8 @@ use wasm_bindgen::prelude::*;
 use crate::voting::Voting;
 
 #[wasm_bindgen]
-pub fn start(js_config: JsValue) {
-    let canvas_id = "canvas";
-
-    let mut voting = Voting::new(canvas_id, js_config);
+pub fn start(canvas_id: Option<String>, js_config: JsValue) {
+    let mut voting = Voting::new(&canvas_id.unwrap(), js_config);
 
     voting.exec();
 }
