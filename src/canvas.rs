@@ -5,14 +5,6 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use crate::node::Node;
 use crate::flow::Flow;
-use web_sys::console::log_1;
-
-struct Stream {
-    origin: Rc<RefCell<Node>>,
-    destination: Rc<RefCell<Node>>,
-    size: i32,
-    color: String
-}
 
 trait CanvasConstants {
     const REC_WIDTH: usize = 20;
@@ -27,7 +19,7 @@ pub struct Canvas {
     context: CanvasRenderingContext2d,
     winner_votes: u32,
     nodes: HashMap<String, Rc<RefCell<Node>>>,
-    streams: Vec<Stream>
+    flows: Vec<Flow>
 }
 
 impl CanvasConstants for Canvas {}
@@ -62,7 +54,7 @@ impl Canvas {
             context,
             nodes: HashMap::new(),
             winner_votes: 0,
-            streams: vec![]
+            flows: vec![]
         }
     }
 
@@ -108,12 +100,11 @@ impl Canvas {
             let Some(origin) = self.nodes.get(&flow.origin().borrow().id().to_string()) else { continue; };
             let Some(destination) = self.nodes.get(&flow.destination().borrow().id().to_string()) else { continue; };
 
-            self.streams.push(Stream {
-                origin: Rc::clone(origin),
-                destination: Rc::clone(destination),
-                size: flow.size(),
-                color: flow.color().to_string()
-            });
+            let mut new_flow = flow.clone();
+            new_flow.set_origin(Rc::clone(origin));
+            new_flow.set_destination(Rc::clone(destination));
+            
+            self.flows.push(new_flow);
         }
     }
 
@@ -139,15 +130,15 @@ impl Canvas {
         let mut origin_y_offsets: HashMap<String, f64> = HashMap::new();
         let mut destination_y_offsets: HashMap<String, f64> = HashMap::new();
 
-        for stream in &self.streams {
-            self.context.set_fill_style(&JsValue::from_str(stream.color.as_ref()));
+        for flow in &self.flows {
+            self.context.set_fill_style(&JsValue::from_str(flow.color().as_ref()));
             
-            let origin = stream.origin.borrow();
-            let destination = stream.destination.borrow();
+            let origin = flow.origin().borrow();
+            let destination = flow.destination().borrow();
 
-            let origin_percentage: f64 = stream.size as f64 / origin.votes() as f64;
+            let origin_percentage: f64 = flow.size() as f64 / origin.votes() as f64;
             let origin_height = origin.height() * origin_percentage;
-            let destination_percentage: f64 = stream.size as f64 / destination.votes() as f64;
+            let destination_percentage: f64 = flow.size() as f64 / destination.votes() as f64;
             let destination_height = destination.height() * destination_percentage;
 
             let origin_y_offset = origin_y_offsets.entry(origin.id().to_string()).or_insert(0.0);

@@ -7,6 +7,7 @@ trait FlowConstants {
     const FLOW_COLOR_LOSE: &'static str = "#484848";
 }
 
+#[derive(Clone)]
 pub struct Flow {
     origin: Rc<RefCell<Node>>,
     destination: Rc<RefCell<Node>>,
@@ -44,5 +45,13 @@ impl Flow {
 
     pub fn set_winning_color(&mut self) {
         self.color = Self::FLOW_COLOR_WIN.to_string();
+    }
+
+    pub fn set_origin(&mut self, origin: Rc<RefCell<Node>>) {
+        self.origin = origin;
+    }
+
+    pub fn set_destination(&mut self, destination: Rc<RefCell<Node>>) {
+        self.destination = destination;
     }
 }
