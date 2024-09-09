@@ -93,7 +93,9 @@ impl Canvas {
         self.flows = flows
             .iter()
             .filter_map(|flow| {
-                let origin = self.nodes.get(&flow.origin().borrow().id().to_string())?;
+                let origin = self
+                    .nodes
+                    .get(&flow.origin().borrow().id().to_string())?;
                 let destination = self
                     .nodes
                     .get(&flow.destination().borrow().id().to_string())?;
